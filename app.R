@@ -111,6 +111,7 @@ server <- function(input, output, session) {
       facet_wrap(~name, scales = 'free_y', ncol = 1) + 
       xlab('') +
       ylab('log. rel. ab.') + 
+      labs(fill = "Group") +
       scale_fill_manual(values = color_vector,
                         guide = 'none') +
       scale_colour_manual(values = color_vector) + 
@@ -130,7 +131,8 @@ server <- function(input, output, session) {
     density_plots <- ggplot(density_plots_df, aes(x = value, fill=AJCC_stage)) + 
       geom_density() +
       facet_wrap(~name, scales = 'free_y', ncol = 1) +
-      xlab('log. rel. ab.') + 
+      xlab('log. rel. ab.') +
+      labs(fill = "Group") +
       scale_fill_manual(values = color_vector) +
       theme_bw()
     
@@ -140,13 +142,15 @@ server <- function(input, output, session) {
   
   # UMAP
   output$umap_plot <- renderPlot({
-    umap_df <- df_data_umap()
+    umap_df <- df_data()
     if(is.null(umap_df)){return()}
     
-    umap_object <- umap(umap_df)
+    umap_object <- umap_df %>%
+      dplyr::select_if(is.numeric) %>%
+      umap
     
     umap_plot_data <- data.frame(umap_object$layout,
-                                 Group = df_data$AJCC_stage)
+                                 Group = umap_df$AJCC_stage)
     
     umap_plot <- ggplot(umap_plot_data,aes(x = X1, y = X2)) +
       geom_point(size = 2, aes(color = Group)) +
